@@ -1,0 +1,520 @@
+B cells	ABCB4
+B cells	AC104699.1
+B cells	BACH2
+B cells	BCL11A
+B cells	BLK
+B cells	BLNK
+B cells	CCR9
+B cells	CD19
+B cells	CD72
+B cells	COCH
+B cells	CR2
+B cells	FAM30A
+B cells	FCRL2
+B cells	GLDC
+B cells	GNG7
+B cells	HLA-DOB
+B cells	HLA-DQA1
+B cells	IGHA1
+B cells	IGHD
+B cells	IGHG1
+B cells	IGHM
+B cells	IGKC
+B cells	MEF2C
+B cells	MICAL3
+B cells	MS4A1
+B cells	OSBPL10
+B cells	PNOC
+B cells	QRSL1
+B cells	SCN3A
+B cells	SLC15A2
+B cells	SPIB
+B cells	TCL1A
+B cells	TNFRSF17
+T cells	BCL11B
+T cells	CD2
+T cells	CD3D
+T cells	CD3E
+T cells	CD3G
+T cells	CD6
+T cells	CD96
+T cells	GIMAP5
+T cells	LCK
+T cells	NCALD
+T cells	PRKCQ
+T cells	SH2D1A
+T cells	SKAP1
+T cells	TRAC
+T cells	TRAT1
+T cells	TRBC1
+T helper cells	ANP32B
+T helper cells	ASF1A
+T helper cells	ATF2
+T helper cells	BATF
+T helper cells	BORA
+T helper cells	CD28
+T helper cells	DDX50
+T helper cells	FAM111A
+T helper cells	FRYL
+T helper cells	GOLGA8A
+T helper cells	ICOS
+T helper cells	ITM2A
+T helper cells	LRBA
+T helper cells	NAP1L4
+T helper cells	NUP107
+T helper cells	PHF10
+T helper cells	PPP2R5C
+T helper cells	RPA1
+T helper cells	SEC24C
+T helper cells	SLC25A12
+T helper cells	SRSF10
+T helper cells	TRAV9-2
+T helper cells	UBE2L3
+T helper cells	YME1-Like 1
+Tcm	AQP3
+Tcm	ATF7IP
+Tcm	ATM
+Tcm	CASP8
+Tcm	CDC14A
+Tcm	CEP68
+Tcm	CLUAP1
+Tcm	CREBZF
+Tcm	CYLD
+Tcm	DOCK9
+Tcm	FOXP1
+Tcm	FYB1
+Tcm	HNRNPH1
+Tcm	INPP4B
+Tcm	KLF12
+Tcm	KMT2A
+Tcm	MAP3K1
+Tcm	N4BP2L2-IT2
+Tcm	NEFL
+Tcm	NFATC3
+Tcm	NMT2
+Tcm	PCM1
+Tcm	PCNX1
+Tcm	PDXDC2P
+Tcm	PHC3
+Tcm	POLR2J2
+Tcm	PSPC1
+Tcm	REPS1
+Tcm	SLC7A6
+Tcm	SNRPN
+Tcm	ST3GAL1
+Tcm	STX16
+Tcm	TIMM8A
+Tcm	TRAF3IP3
+Tcm	TXK
+Tcm	TXLNGY
+Tcm	USP9Y
+Tcm	ZC3H11B
+Tem	AKT3
+Tem	CCR2
+Tem	DDX17
+Tem	FLI1
+Tem	GDPD5
+Tem	LTK
+Tem	MEFV
+Tem	NFATC4
+Tem	PRKY
+Tem	SND1-IT1
+Tem	TBC1D5
+Tem	TBCD
+Tem	TRAV10
+Tem	VIL2
+TFH	B3GAT1
+TFH	CDK5R1
+TFH	CHGB
+TFH	CHI3L2
+TFH	CXCL13
+TFH	CXCR5
+TFH	HEY1
+TFH	HIST1H4K
+TFH	ICA1
+TFH	KCNK5
+TFH	KIAA1324
+TFH	LDLRAD4
+TFH	MAF
+TFH	MAGEH1
+TFH	MKL2
+TFH	MYO6
+TFH	MYO7A
+TFH	PASK
+TFH	PDCD1
+TFH	POMT1
+TFH	PTPN13
+TFH	PVALB
+TFH	SH3TC1
+TFH	SIRPG
+TFH	SLC7A10
+TFH	SMAD1
+TFH	ST8SIA1
+TFH	STK39
+TFH	THADA
+TFH	TOX
+TFH	TSHR
+TFH	ZNF764
+Tgd	C1ORF61
+Tgd	CD160
+Tgd	FEZ1
+Tgd	TRDC
+Tgd	TRGV9
+Th1 cells	APOD
+Th1 cells	ATP9A
+Th1 cells	BST2
+Th1 cells	BTG3
+Th1 cells	CCL4
+Th1 cells	CD38
+Th1 cells	CD70
+Th1 cells	CMAHP
+Th1 cells	CSF2
+Th1 cells	CTLA4
+Th1 cells	DGKI
+Th1 cells	DOK5
+Th1 cells	DPP4
+Th1 cells	DUSP5
+Th1 cells	EGFL6
+Th1 cells	GGT1
+Th1 cells	HBEGF
+Th1 cells	IFNG
+Th1 cells	IL12RB2
+Th1 cells	IL22
+Th1 cells	LRP8
+Th1 cells	LRRN3
+Th1 cells	LTA
+Th1 cells	SGCB
+Th1 cells	SYNGR3
+Th1 cells	ZBTB32
+Th17 cells	IL17A
+Th17 cells	IL17RA
+Th17 cells	RORC
+Th2 cells	ADCY1
+Th2 cells	AHI1
+Th2 cells	ANK1
+Th2 cells	BIRC5
+Th2 cells	CDC25C
+Th2 cells	CDC7
+Th2 cells	CENPF
+Th2 cells	CXCR6
+Th2 cells	DHFR
+Th2 cells	EVI5
+Th2 cells	GATA3
+Th2 cells	GSTA4
+Th2 cells	HELLS
+Th2 cells	IL26
+Th2 cells	LAIR2
+Th2 cells	LIMA1
+Th2 cells	MB
+Th2 cells	MICAL2
+Th2 cells	NEIL3
+Th2 cells	PHEX
+Th2 cells	PMCH
+Th2 cells	PTGIS
+Th2 cells	SLC39A14
+Th2 cells	SMAD2
+Th2 cells	SNRPD1
+Th2 cells	WDHD1
+Treg	FOXP3
+CD8 T cells	ABT1
+CD8 T cells	AES
+CD8 T cells	CAMLG
+CD8 T cells	CD8A
+CD8 T cells	CD8B
+CD8 T cells	CDKN2AIP
+CD8 T cells	DNAJB1
+CD8 T cells	FLT3LG
+CD8 T cells	GADD45A
+CD8 T cells	GZMM
+CD8 T cells	HAUS3
+CD8 T cells	KAT6A
+CD8 T cells	KLF9
+CD8 T cells	LEPROTL1
+CD8 T cells	LIME1
+CD8 T cells	MAPKAPK5-AS1
+CD8 T cells	PF4
+CD8 T cells	PPP1R2
+CD8 T cells	PRF1
+CD8 T cells	PRR5
+CD8 T cells	RBM3
+CD8 T cells	SF1
+CD8 T cells	SLC16A7
+CD8 T cells	SRSF7
+CD8 T cells	TBCC
+CD8 T cells	THUMPD1
+CD8 T cells	TMC6
+CD8 T cells	TMEM259
+CD8 T cells	TSC22D3
+CD8 T cells	VAMP2
+CD8 T cells	ZEB1
+CD8 T cells	ZFP36L2
+CD8 T cells	ZNF22
+CD8 T cells	ZNF609
+CD8 T cells	ZNF91
+Cytotoxic cells	APBA2
+Cytotoxic cells	APOL3
+Cytotoxic cells	CTSW
+Cytotoxic cells	DUSP2
+Cytotoxic cells	GNLY
+Cytotoxic cells	GZMA
+Cytotoxic cells	GZMH
+Cytotoxic cells	KLRB1
+Cytotoxic cells	KLRD1
+Cytotoxic cells	KLRF1
+Cytotoxic cells	KLRK1
+Cytotoxic cells	NKG7
+Cytotoxic cells	RORA
+Cytotoxic cells	RUNX3
+Cytotoxic cells	SIGIRR
+Cytotoxic cells	WHAMMP3
+Cytotoxic cells	ZBTB16
+NK cells	ADARB1
+NK cells	ALDH1B1
+NK cells	APBB2
+NK cells	ATL2
+NK cells	BCL2
+NK cells	CDC5L
+NK cells	FGF18
+NK cells	FUT5
+NK cells	FZR1
+NK cells	GAGE2A
+NK cells	GNAS
+NK cells	KANK2
+NK cells	LDB3
+NK cells	MAPRE3
+NK cells	MCM3AP
+NK cells	MRC2
+NK cells	NCR1
+NK cells	PDLIM4
+NK cells	PRX
+NK cells	PSMD4
+NK cells	SLC30A5
+NK cells	SMEK1
+NK cells	SPN
+NK cells	TBXA2R
+NK cells	TCTN2
+NK cells	TINAGL1
+NK cells	TRPV6
+NK cells	XCL2
+NK cells	ZNF205
+NK cells	ZNF528
+NK cells	ZNF747
+NK CD56bright cells RRAD	DUSP4
+NK CD56bright cells RRAD	FOXJ1
+NK CD56bright cells RRAD	LPCAT4
+NK CD56bright cells RRAD	MADD
+NK CD56bright cells RRAD	MARCH6
+NK CD56bright cells RRAD	MPPED1
+NK CD56bright cells RRAD	MUC3A
+NK CD56bright cells RRAD	PLA2G6
+NK CD56bright cells RRAD	RRAD
+NK CD56bright cells RRAD	TRAPPC9
+NK CD56bright cells RRAD	XCL1
+NK CD56dim cells	GTF3C1
+NK CD56dim cells	GZMB
+NK CD56dim cells	IL21R
+NK CD56dim cells	KIR2DL3
+NK CD56dim cells	KIR2DS4
+NK CD56dim cells	KIR3DL1
+NK CD56dim cells	KIR3DL2
+NK CD56dim cells	KIR3DL3
+NK CD56dim cells	PMEPA1
+NK CD56dim cells	S1PR5
+NK CD56dim cells	SPON2
+NK CD56dim cells	TTC38
+aDC	CCL1
+aDC	EBI3
+aDC	IDO1
+aDC	LAMP3
+aDC	OAS3
+iDC	ABCG2
+iDC	BLVRB
+iDC	CARD9
+iDC	CD1A
+iDC	CD1B
+iDC	CD1C
+iDC	CD1E
+iDC	CH25H
+iDC	CLEC10A
+iDC	CSF1R
+iDC	CTNS
+iDC	DCSTAMP
+iDC	F13A1
+iDC	FABP4
+iDC	FZD2
+iDC	GUCA1A
+iDC	HS3ST2
+iDC	LMAN2L
+iDC	MMP12
+iDC	MS4A6A
+iDC	NUDT9
+iDC	PDXK
+iDC	PPARG
+iDC	PREP
+iDC	RAP1GAP
+iDC	SLC26A6
+iDC	SLC7A8
+iDC	SYT17
+iDC	TACSTD2
+iDC	VASH1
+pDC	IL3RA
+DC	CCL13
+DC	CCL17
+DC	CCL22
+DC	CD209
+DC	HSD11B1
+DC	NPR1
+DC	PPFIBP2
+Macrophages	ANOS1
+Macrophages	APOE
+Macrophages	ATG7
+Macrophages	BCAT1
+Macrophages	CCL7
+Macrophages	CD163
+Macrophages	CD68
+Macrophages	CD84
+Macrophages	CHI3L1
+Macrophages	CHIT1
+Macrophages	CLEC5A
+Macrophages	COL8A2
+Macrophages	COLEC12
+Macrophages	CTSK
+Macrophages	CXCL5
+Macrophages	CYBB
+Macrophages	DNASE2B
+Macrophages	EMP1
+Macrophages	FDX1
+Macrophages	FN1
+Macrophages	GM2A
+Macrophages	GPC4
+Macrophages	MARCO
+Macrophages	ME1
+Macrophages	MS4A4A
+Macrophages	MSR1
+Macrophages	PCOLCE2
+Macrophages	PTGDS
+Macrophages	RAI14
+Macrophages	SCARB2
+Macrophages	SCG5
+Macrophages	SGMS1
+Macrophages	SULT1C2
+Eosinophils	ABHD2
+Eosinophils	ACACB
+Eosinophils	ADGRE1
+Eosinophils	CAT
+Eosinophils	CCR3
+Eosinophils	CD101
+Eosinophils	CLC
+Eosinophils	CYSLTR2
+Eosinophils	EPN2
+Eosinophils	GALC
+Eosinophils	HES1
+Eosinophils	HIST1H1C
+Eosinophils	HRH4
+Eosinophils	IL5RA
+Eosinophils	KBTBD11
+Eosinophils	KCNH2
+Eosinophils	LRP5L
+Eosinophils	MYO15B
+Eosinophils	PTGDR2
+Eosinophils	RCOR3
+Eosinophils	RNASE2
+Eosinophils	RRP12
+Eosinophils	SIAH1
+Eosinophils	SMPD3
+Eosinophils	SYNJ1
+Eosinophils	TGIF1
+Eosinophils	THBS1
+Eosinophils	THBS4
+Eosinophils	TIPARP
+Eosinophils	TKTL1
+Eosinophils	TRMO
+Mast cells	ABCC4
+Mast cells	ADCYAP1
+Mast cells	CALB2
+Mast cells	CEACAM8
+Mast cells	CMA1
+Mast cells	CPA3
+Mast cells	CTSG
+Mast cells	ELANE
+Mast cells	GATA2
+Mast cells	HDC
+Mast cells	HPGD
+Mast cells	HPGDS
+Mast cells	KIT
+Mast cells	MAOB
+Mast cells	MLPH
+Mast cells	MPO
+Mast cells	MS4A2
+Mast cells	NR0B1
+Mast cells	PPM1H
+Mast cells	PRG2
+Mast cells	PTGS1
+Mast cells	SCG2
+Mast cells	SIGLEC6
+Mast cells	SLC18A2
+Mast cells	SLC24A3
+Mast cells	TAL1
+Mast cells	TPSAB1
+Mast cells	TPSB2
+Mast cells	VWA5A
+Neutrophils	ALPL
+Neutrophils	BST1
+Neutrophils	CD93
+Neutrophils	CEACAM3
+Neutrophils	CPPED1
+Neutrophils	CREB5
+Neutrophils	CRISPLD2
+Neutrophils	CSF3R
+Neutrophils	CXCR1
+Neutrophils	CXCR2
+Neutrophils	CYP4F3
+Neutrophils	DYSF
+Neutrophils	FCAR
+Neutrophils	FCGR3B
+Neutrophils	FPR1
+Neutrophils	FPR2
+Neutrophils	G0S2
+Neutrophils	HIST1H2BC
+Neutrophils	HPSE
+Neutrophils	KCNJ15
+Neutrophils	LILRB2
+Neutrophils	MGAM
+Neutrophils	MME
+Neutrophils	PDE4B
+Neutrophils	S100A12
+Neutrophils	SIGLEC5
+Neutrophils	SLC22A4
+Neutrophils	SLC25A37
+Neutrophils	TECPR2
+Neutrophils	TNFRSF10C
+Neutrophils	VNN3
+Immune checkpoints	PDCD1
+Immune checkpoints	CD274
+Immune checkpoints	CTLA4
+Immune checkpoints	VISTA
+Immune checkpoints	B7H3
+Immune checkpoints	TIGIT
+Immune checkpoints	TIM3
+Immune checkpoints	LAG-3
+MHC I	HLA-A
+MHC I	HLA-B
+MHC I	HLA-C
+MHC I	HLA-E
+MHC I	HLA-F
+MHC I	HLA-G
+MHC I	HLA-H
+MHC II	HLA-DMA
+MHC II	HLA-DMB
+MHC II	HLA-DOA
+MHC II	HLA-DOB
+MHC II	HLA-DPA1
+MHC II	HLA-DPB1
+MHC II	HLA-DQA1
+MHC II	HLA-DQA2
+MHC II	HLA-DQB1
+MHC II	HLA-DRA
+MHC II	HLA-DRB1
+MHC II	HLA-DRB3
+MHC II	HLA-DRB4
+MHC II	HLA-DRB5
