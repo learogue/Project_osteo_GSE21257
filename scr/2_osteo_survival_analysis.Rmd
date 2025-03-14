@@ -1,0 +1,610 @@
+---
+title: "Survival analysis of patients with osteosarcoma"
+author: "Léa ROGUE"
+output:
+  pdf_document:
+    fig_caption: true
+    latex_engine: xelatex
+    toc: true
+    toc_depth: '4'
+    includes:
+      before_body: tex_files/list_of_figures.tex
+date: "2025-03-13"
+---
+
+```{r, echo = FALSE}
+library(knitr)
+opts_chunk$set(
+  tidy.opts = list(width.cutoff = 60), 
+  tidy = TRUE, 
+  fig.align = 'center'
+)
+```
+
+\newpage
+
+Intro
+
+# Load librairies
+```{r, results='hide', message=FALSE, warning=FALSE}
+library(dplyr)
+library(survival)
+library(forestplot)
+library(survminer)
+library(ggplot2)
+library(ggsurvfit)
+library(gridExtra)
+library(tidyr)
+library(stringr)
+```
+
+# Functions
+```{r}
+# Function to apply coxph model per columns
+apply_coxph_model <- function(df) {
+  # Empty df
+  results <- data.frame()
+
+  # Loop on each columns to apply coxph
+  for (col in colnames(df)[3:ncol(df)]) {
+    model <- coxph(Surv(OS.delay, OS.event) ~ df[[col]], data = df)
+    
+    # Extract results
+    exp_coef <- summary(model)$coefficients[,"exp(coef)"]
+    lower_ci <- summary(model)$conf.int[,"lower .95"]
+    upper_ci <- summary(model)$conf.int[,"upper .95"]
+    p_value <- summary(model)$coefficients[,"Pr(>|z|)"]
+    results <- rbind(results, data.frame(
+      Variable = col,
+      HR = exp_coef,
+      LowerCI = lower_ci,
+      UpperCI = upper_ci,
+      Pvalue = p_value
+    ))
+  }
+  return(results)
+}
+
+# Function to create Kaplan-Meier plot
+plot_km <- function(mod, df) {
+  km_plot <- ggsurvplot(mod,
+             data = df,      
+             pval = TRUE,
+             conf.int = FALSE,
+             ggtheme = theme_bw(),
+             palette = c("#E7B800", "#2E9FDF", "#FF6F61", "#4EBB92"))
+    return(km_plot$plot)
+}
+
+# Function to generate forest plot from coxph analysis from the function apply_coxph_model
+generate_forestplot <- function(data, Type) {
+  if (Type == TRUE){
+    # Order by Signature and p-value
+    data <- data[order(data$Signature,  data$Pvalue),]
+    data$Pvalue <- sprintf("%.4f", data$Pvalue)
+    data %>%
+      forestplot(
+        labeltext = c(Signature, Variable, Pvalue),   
+        mean = HR,
+        lower = LowerCI,
+        upper = UpperCI,
+        grid = TRUE,
+        zero = 1,
+        col = fpColors(box = "black", line = "black"),
+        hrzl_lines = TRUE,
+        title = "Forest Plot for Cox Model",
+        txt_gp = fpTxtGp(label = gpar(fontsize = 8)),
+        ci.vertices = TRUE,
+        boxsize = 0.1) %>%
+      fp_set_zebra_style("#EFEFEF") %>% 
+      fp_add_header(
+        Signature = c("", "Cell type"),
+        Variable = c("", "Genes"),
+        Pvalue = c("", "p-value"))
+  }
+  else {
+    # Order by p-value
+    data <- data[order(data$Pvalue),]
+    data$Pvalue <- sprintf("%.4f", data$Pvalue)
+    data %>%
+      forestplot(
+        labeltext = c(Variable, Pvalue),   
+        mean = HR,
+        lower = LowerCI,
+        upper = UpperCI,
+        grid = TRUE,
+        zero = 1,
+        col = fpColors(box = "black", line = "black"),
+        hrzl_lines = TRUE,
+        title = "Forest Plot for Cox Model",
+        txt_gp = fpTxtGp(label = gpar(fontsize = 8)),
+        ci.vertices = TRUE,
+        boxsize = 0.1) %>%
+      fp_set_zebra_style("#EFEFEF") %>% 
+      fp_add_header(
+        Variable = c("", "Genes"),
+        Pvalue = c("", "p-value"))    
+  }
+}
+```
+
+# Load and format data
+```{r}
+# Matrix with z-scores intensities and information on immune signature and CTA
+df_expr_z_scores <- read.table("../results/expr_matrix_CTA_sign_imm_z_scores.tsv", sep = "\t", header = TRUE, check.names = FALSE)
+
+# Matrix with average expression per cell types in z-scores
+df_imm_z_scores <- read.table("../results/imm_sign_avg_z_scores.tsv", sep = "\t", header = TRUE, check.names = FALSE)
+rownames(df_imm_z_scores) <- df_imm_z_scores$Signature
+df_imm_z_scores <- as.data.frame(t(df_imm_z_scores[, -1]))
+```
+
+
+```{r}
+# Create a better matrix
+metadata <- read.table("../data/metadata.tsv", sep = "\t", header = F)
+df_metadata <- as.data.frame(t(metadata))
+colnames(df_metadata) <- df_metadata[1,]
+df_metadata <- df_metadata[-1,]
+colnames(df_metadata) <- gsub(" ", "_", colnames(df_metadata))
+df_metadata$OS.event <- ifelse(grepl("Alive", df_metadata$status), 0, 1)
+df_metadata$OS.delay <- as.numeric(str_extract(df_metadata$status, "\\d+"))
+df_metadata_surv <- df_metadata %>% select(Patient, OS.delay, OS.event)
+
+```
+
+\newpage
+
+# I. Immune cells survival analysis
+This part concern the survival analysis with the expression of the immune cells. This is to observe the impact of each cell types on the survival probabilities of the patients.
+
+## 1) All chondrosarcoma types
+### a- Categorical data
+Categorical data refer to HIGH or LOW expression based on the median of z-scores. If the score is > than median, HIGH is affected contrary to < than median, LOW is affected. In this section, we use Cox regression.
+```{r, fig.keep='last', fig.cap="Forest plot for categorical immune cell types expression (n = 82)"}
+# Transform to categorical data and take continuous data
+# Computing medians to have categorical data
+medians_sign <- apply(df_imm_z_scores, 2, median)
+
+# Add categorical data, LOW is for under expressed genes (under the median) and HIGH upreg
+df_cat_all <- df_imm_z_scores
+for (col in colnames(df_cat_all)) {
+  new_column_name <- paste(col, "cat", sep = " ")
+  df_cat_all[[new_column_name]] <- ifelse(df_imm_z_scores[[col]] > medians_sign[col], "HIGH", "LOW")
+}
+
+# Select categories
+df_cat_all <- df_cat_all[, grep("cat", colnames(df_cat_all))]
+
+# Replace space by _
+colnames(df_cat_all) <- gsub(" ", "_", colnames(df_cat_all))
+
+# Add col for merging
+df_cat_all$Patient <- rownames(df_cat_all)
+
+# Merge df
+df_survival_all <- merge(df_metadata_surv, df_cat_all, by = "Patient")
+rownames(df_survival_all) <- df_survival_all$Patient
+df_survival_all <- df_survival_all[, -1]
+
+# Continuous data
+df_cont_all <- df_imm_z_scores
+
+# Replace space by _
+colnames(df_cont_all) <- gsub(" ", "_", colnames(df_cont_all))
+
+# Merge df
+df_cont_all$Patient <- rownames(df_cont_all)
+df_survival_cont <- merge(df_metadata_surv, df_cont_all, by = "Patient")
+rownames(df_survival_cont) <- df_survival_cont$Patient
+df_survival_cont <- df_survival_cont[, -1]
+
+# CTA data
+rownames(df_expr_z_scores) <- df_expr_z_scores$SYMBOL
+df_expr_cta <- subset(df_expr_z_scores, CTA == "CTA")
+df_expr_cta <- df_expr_cta[,!colnames(df_expr_cta) %in% c("Signature", "CTA", "SYMBOL")]
+df_expr_cta <- as.data.frame(t(df_expr_cta))
+df_expr_cta <- df_expr_cta[df_metadata_surv$Patient,]
+df_expr_cta$Patient <- rownames(df_expr_cta)
+df_expr_cta <- merge(df_metadata_surv, df_expr_cta, by = "Patient")
+rownames(df_expr_cta) <- df_expr_cta$Patient
+df_expr_cta <- df_expr_cta[, -1]
+
+# Apply coxph model on the categorical variables for the immune signatures
+results_cat <- apply_coxph_model(df_survival_all)
+#write.table(results_cat, "../results/results_coxhp.tsv", sep = "\t", row.names = FALSE, quote = FALSE)
+generate_forestplot(data = results_cat, Type = FALSE)
+```
+We see that the p-value are high, maybe because of categorical data because Cox model rank the values.
+
+### b- Continuous data
+In this section, we use z-scores data with Cox model.
+```{r, fig.cap="Forest plot for continuous immune cell types expression (n = 82)"}
+# Apply coxph on continuous
+results_cont <- apply_coxph_model(df_survival_cont)
+#write.table(results_cont, "../results/results_coxph_var_cont.tsv", sep = "\t", row.names = FALSE, quote = FALSE)
+#pdf("../results/figures/forest_plots/all_indiv/forest_plot_all_patients_var_cont.pdf")
+generate_forestplot(results_cont, Type = FALSE)
+#dev.off()
+```
+The p-values are smaller than the model with categorical data so it's seems to be better with continuous data.
+
+For all patients, we see that the hazard ratio (survival probabilities) are increased for Th2 cells, Immune checkpoints, aDC and Treg. So, more these cell types are present in the tumors, more the probability of death is higher, these cell types have a bad impact on survival. Contrary to eosinophils and DC, the HR decreased so more these cells are present in the tumors, the death probability decreased so they have a good impact on prognostic.
+
+### c- Kaplan-Meier plots
+This part compute Kaplan-Meier plot based on log rank test that use categorical data to see the trend of survival for the 2 groups (HIGH or LOW expression of the cell types)
+This shows the graph for each significant HR ratio previously computed with Cox model.
+```{r, fig.height=20, fig.width=15, fig.cap="Kaplan-Meier plots for immune cell types (n = 82)"}
+#Create Kaplan-Meier plots with categorical data
+p1 <- plot_km(survfit(Surv(OS.delay, OS.event) ~ DC_cat, data = df_survival_all), df_survival_all)
+p2 <- plot_km(survfit(Surv(OS.delay, OS.event) ~ Eosinophils_cat, data = df_survival_all), df_survival_all)
+p3 <- plot_km(survfit(Surv(OS.delay, OS.event) ~ Immune_checkpoints_cat, data = df_survival_all), df_survival_all)
+p4 <- plot_km(survfit(Surv(OS.delay, OS.event) ~ TFH_cat, data = df_survival_all), df_survival_all)
+p5 <- plot_km(survfit(Surv(OS.delay, OS.event) ~ Th2_cells_cat, data = df_survival_all), df_survival_all)
+p6 <- plot_km(survfit(Surv(OS.delay, OS.event) ~ Treg_cat, data = df_survival_all), df_survival_all)
+p7 <- plot_km(survfit(Surv(OS.delay, OS.event) ~ aDC_cat, data = df_survival_all), df_survival_all)
+#pdf("../results/figures/other_plots/KM_plots_signif_cox_all_indiv.pdf", height = 20, width = 15)
+grid.arrange(p1, p2, p3, p4, p5, p6, p7, ncol = 2)
+#dev.off()
+```
+\newpage
+With log rank test, we see that only Th2 and eosinophils are significant.
+
+### d- Survival analysis for Th2 cells
+In this part, we want to see the HR of the genes expressed by Th2 cells To determine if some genes have a dominant effect over others.
+```{r, fig.cap="Forest plot for Th2 cells (n = 82)"}
+# List of genes expressed in th2 cells
+l_genes_th2 <- c("ADCY1", "AHI1", "ANK1", "BIRC5", "CDC25C", "CDC7", "CENPF", "CXCR6", "DHFR", "EVI5", "GATA3", "GSTA4", "HELLS", "IL26", "LAIR2", "LIMA1", "MB", "MICAL2", "NEIL3", "PHEX", "PMCH", "PTGIS", "SLC39A14", "SMAD2", "SNRPD1", "WDHD1")
+
+# Select rows in the expression matrix
+df_expr_th2 <- df_expr[rownames(df_expr) %in% l_genes_th2,]
+df_expr_th2 <- df_expr_th2[,-c(1:3)]
+
+# Apply coxph model
+df_expr_th2 <- as.data.frame(t(df_expr_th2))
+df_expr_th2 <- df_expr_th2[df_metadata_surv$Patient,]
+df_expr_th2$Patient <- rownames(df_expr_th2)
+df_survival_th2 <- merge(df_metadata_surv, df_expr_th2, by = "Patient")
+rownames(df_survival_th2) <- df_survival_th2$Patient
+df_survival_th2 <- df_survival_th2[, -1]
+results_th2 <- apply_coxph_model(df_survival_th2)
+
+# Generate forest plot
+#pdf("../results/figures/forest_plots/all_indiv/forest_plot_all_patients_th2.pdf")
+generate_forestplot(results_th2, Type = FALSE)
+#dev.off()
+```
+\newpage
+So, we see that for th 12 significant genes, 10 have a ratio > 2 et only 2 genes have a small ratio. We now can confirm than the prese,ce of Th2 cells have a bad impact on the prognosis.
+
+### e- Significative immune cells genes survival analysis
+Here, we repeat the previous step for the genes of all the significant immune cells.
+```{r, fig.height=15, fig.cap="Forest plot for significative immune cells (n = 82)"}
+# List of immune cells type significant in coxph analysis
+l <- c("DC",  "Eosinophils", "Immune checkpoints", "TFH", "Th2 cells", "Treg", "aDC")
+
+# Select the genes for cell types selected
+df_selected_imm <- df_CTA_immune_whole_clean_avg[df_CTA_immune_whole_clean_avg$Signature %in% l, ] %>% select(Signature)
+df_selected_imm$Variable <- rownames(df_selected_imm)
+df_selected_imm_expr <- df_CTA_immune_whole_clean_avg[, colnames(df_CTA_immune_whole_clean_avg) %in% df_metadata_surv$Patient]
+df_selected_imm_expr <- df_selected_imm_expr[rownames(df_selected_imm_expr) %in% rownames(df_selected_imm),]
+df_selected_imm_expr <- as.data.frame(t(df_selected_imm_expr))
+df_selected_imm_expr$Patient <- rownames(df_selected_imm_expr)
+
+# Merge with metadata
+df_selected_imm_expr <- merge(df_metadata_surv[, c("Patient", "OS.delay", "OS.event")], df_selected_imm_expr, by = "Patient")
+rownames(df_selected_imm_expr) <- df_selected_imm_expr$Patient
+df_selected_imm_expr <- df_selected_imm_expr[, -1]
+
+# Apply coxph model and merge with cel types
+results_selected_imm <- apply_coxph_model(df_selected_imm_expr)
+results_selected_imm <- merge(results_selected_imm, df_selected_imm, by = "Variable")
+
+# Create forest plot
+#pdf("../results/figures/forest_plots/all_indiv/forest_plot_selected_imm_all_indiv.pdf", height = 15, width = 8)
+generate_forestplot(results_selected_imm, Type = TRUE)
+#dev.off()
+```
+\newpage
+This forest plot show the impact of each cell types on the survival probabilities. We can see the genes that are drive the results.
+
+## 2) Conventional chondrosarcomas
+This section concern the survival analysis for conventional chondrosarcomas. This is the same stpes than previously.
+
+### a- Categorical data
+```{r, fig.cap="Forest plot for categorical immune cell types expression (n = 63)"}
+# Compute medians for each immune cell types
+medians_sign <- apply(df_avg_immune_sign_z_scores_conv, 2, median)
+
+# Adding categorical column
+df_cat_conv <- df_avg_immune_sign_z_scores_conv
+for (col in colnames(df_cat_conv)) {
+  new_column_name <- paste(col, "cat", sep = " ")
+  df_cat_conv[[new_column_name]] <- ifelse(df_avg_immune_sign_z_scores_conv[[col]] > medians_sign[col], "HIGH", "LOW")
+}
+
+# Select categories
+df_cat_conv <- df_cat_conv[, grep("cat", colnames(df_cat_conv))]
+
+# Replace space by _
+colnames(df_cat_conv) <- gsub(" ", "_", colnames(df_cat_conv))
+
+# Merge df
+df_cat_conv$Patient <- rownames(df_cat_conv)
+df_survival_conv_cat <- merge(df_metadata_surv_conv, df_cat_conv, by = "Patient")
+rownames(df_survival_conv_cat) <- df_survival_conv_cat$Patient
+df_survival_conv_cat <- df_survival_conv_cat[, -1]
+
+# Apply coxph model and create forest plot
+results <- apply_coxph_model(df_survival_conv_cat)
+#write.table(results, "../results/results_coxhp.tsv", sep = "\t", row.names = FALSE, quote = FALSE)
+generate_forestplot(results, Type = FALSE)
+```
+\newpage
+By using categorical data and Cox model, there is only Th2 that are signnificant.
+
+### b- Continuous data
+```{r, fig.cap="Forest plot for continuous immune cell types expression (n = 63)"}
+df_cont_conv <- df_avg_immune_sign_z_scores_conv
+
+# Replace space by _
+colnames(df_cont_conv) <- gsub(" ", "_", colnames(df_cont_conv))
+
+# Merge df
+df_cont_conv$Patient <- rownames(df_cont_conv)
+df_survival_conv <- merge(df_metadata_surv_conv, df_cont_conv, by = "Patient")
+rownames(df_survival_conv) <- df_survival_conv$Patient
+df_survival_conv <- df_survival_conv[, -1]
+
+# Apply coxph model and generate plot
+results_cont <- apply_coxph_model(df_survival_conv)
+#write.table(results_cont, "../results/results_coxph_var_cont_patients_conv.tsv", sep = "\t", row.names = FALSE, quote = FALSE)
+#pdf("../results/figures/forest_plots/conv_chondro/forest_plot_conv_patients_var_cont.pdf")
+generate_forestplot(results_cont, Type = FALSE)
+#dev.off()
+```
+\newpage
+By using z-scores, pDC are now significant and have a good impact on survival probabilities.
+
+### c- Kaplan-Meier plots
+This shows the graph for each significant HR ratio more than significant to all patients to observe the differences.
+```{r, fig.height=20, fig.width=15, fig.cap="Kaplan-Meier plots for immune cell types (n = 63)"}
+# Create Kaplan-Meier plots with categorical data
+p1 <- plot_km(survfit(Surv(OS.delay, OS.event) ~ DC_cat, data = df_survival_conv_cat), df_survival_conv_cat)
+p2 <- plot_km(survfit(Surv(OS.delay, OS.event) ~ Eosinophils_cat, data = df_survival_conv_cat), df_survival_conv_cat)
+p3 <- plot_km(survfit(Surv(OS.delay, OS.event) ~ Immune_checkpoints_cat, data = df_survival_conv_cat), df_survival_conv_cat)
+p4 <- plot_km(survfit(Surv(OS.delay, OS.event) ~ TFH_cat, data = df_survival_conv_cat), df_survival_conv_cat)
+p5 <- plot_km(survfit(Surv(OS.delay, OS.event) ~ Th2_cells_cat, data = df_survival_conv_cat), df_survival_conv_cat)
+p6 <- plot_km(survfit(Surv(OS.delay, OS.event) ~ Treg_cat, data = df_survival_conv_cat), df_survival_conv_cat)
+p7 <- plot_km(survfit(Surv(OS.delay, OS.event) ~ aDC_cat, data = df_survival_conv_cat), df_survival_conv_cat)
+p8 <- plot_km(survfit(Surv(OS.delay, OS.event) ~ pDC_cat, data = df_survival_conv_cat), df_survival_conv_cat)
+#pdf("../results/figures/other_plots/KM_plots_signif_cox_conv_indiv.pdf", height = 20, width = 15)
+grid.arrange(p1, p2, p3, p4, p5, p6, p7, p8, ncol = 2)
+#dev.off()
+```
+\newpage
+With this test, we see that only Th2 cells are significant. So we see that this type may be play an important role in the survival.
+
+### d- Survival analysis for Th2 cells
+```{r, fig.cap="Forest plot for Th2 cells (n = 63)"}
+# Take conventional tumors
+df_survival_th2 <- merge(df_metadata_surv_conv, df_expr_th2, by = "Patient")
+rownames(df_survival_th2) <- df_survival_th2$Patient
+df_survival_th2 <- df_survival_th2[, -1]
+
+# Apply coxph model and create forest plot
+results_th2 <- apply_coxph_model(df_survival_th2)
+#pdf("../results/figures/forest_plots/conv_chondro/forest_plot_conv_th2.pdf")
+generate_forestplot(results_th2, Type = FALSE)
+#dev.off()
+```
+
+### e- Significative immune cells genes survival analysis
+```{r, fig.height=6, fig.cap="Forest plot for significative immune cells (n = 63)"}
+# List of immune cell types significant
+l_th2_pdc <- c("Th2 cells", "pDC")
+  
+# Select and prepare data
+df_selected_imm <- df_CTA_immune_whole_clean_avg[df_CTA_immune_whole_clean_avg$Signature %in% l_th2_pdc, ] %>% select(Signature)
+df_selected_imm$Variable <- rownames(df_selected_imm)
+df_selected_imm_expr_conv <- df_CTA_immune_whole_clean_avg[, colnames(df_CTA_immune_whole_clean_avg) %in% df_metadata_surv_conv$Patient]
+df_selected_imm_expr_conv <- df_selected_imm_expr_conv[rownames(df_selected_imm_expr_conv) %in% rownames(df_selected_imm),]
+df_selected_imm_expr_conv <- as.data.frame(t(df_selected_imm_expr_conv))
+df_selected_imm_expr_conv$Patient <- rownames(df_selected_imm_expr_conv)
+df_selected_imm_expr_conv <- merge(df_metadata_surv[, c("Patient", "OS.delay", "OS.event")], df_selected_imm_expr_conv, by = "Patient")
+rownames(df_selected_imm_expr_conv) <- df_selected_imm_expr_conv$Patient
+df_selected_imm_expr_conv <- df_selected_imm_expr_conv[, -1]
+
+# Apply coxph model and create forest plot
+results_selected_imm_conv <- apply_coxph_model(df_selected_imm_expr_conv)
+results_selected_imm_conv <- merge(results_selected_imm_conv, df_selected_imm, by = "Variable")
+results_selected_imm_conv <- results_selected_imm_conv[order(results_selected_imm_conv$Signature, results_selected_imm_conv$Pvalue),]
+#pdf("../results/figures/forest_plots/conv_chondro/forest_plot_selected_imm_conv_indiv.pdf", height = 8, width = 8)
+generate_forestplot(results_selected_imm_conv, Type = TRUE)
+#dev.off()
+```
+
+\newpage
+
+# II. CTA survival analysis
+This section analyzes the impact of CTA on survival probabilites.
+
+## 1) All chondrosarcoma types
+This part concern all the patients.
+```{r, fig.height=18, fig.cap="Forest plot for significant CTA (n = 82)"}
+res_cta <- apply_coxph_model(df_expr_cta)
+#write.table(results_cont, "../results/results_coxph_var_cont_cta_zscore.tsv", sep = "\t", row.names = FALSE, quote = FALSE)
+
+# Forest plot on significative CTA
+res_cta_signif <- res_cta[res_cta$Pvalue < 0.05,]
+#pdf("../results/figures/forest_plots/forest_plot_cta_signif.pdf", width = 10, height = 15)
+generate_forestplot(res_cta_signif, Type = FALSE)
+#dev.off()
+```
+\newpage
+This forest plot illustrates only the significant HR. We see here that there is more bad impact CTA than good impact. We uses this CTA list in script 5 to analyze expression and make a clustering. This results illustrates that there is groups so we make survival analysis to see the difference between group (see III.)
+
+### a- Intensities jitter plot for significant CTA
+In this section, we want to see the intensities per significant CTA to visualize.
+```{r, fig.width=15, fig.cap="Intensitites jitter plot for significant CTA (n = 82)"}
+# Read intensities
+df <- df_CTA_immune_whole_clean_avg[, df_metadata_surv$Patient]
+df <- df[rownames(df) %in% res_cta_signif[,1],]
+df$SYMBOL <- rownames(df)
+
+# Data transformation for the plot
+df_long <- pivot_longer(df, 
+                        cols = -SYMBOL, 
+                        values_to = "value")
+
+#pdf(file = "../results/figures/other_plots/plot_cta_coxph_signif_all_indiv.pdf", height = 10, width = 50)
+ggplot(df_long, aes(x = reorder(SYMBOL, -value), y = value)) +
+  geom_jitter(width = 0.2, height = 0, size = 1, alpha = 0.3, colour = "blue") +
+  geom_boxplot(alpha = 0.4, outliers = FALSE, colour = "black", fill = NA) +
+  labs(title = "Plot of instensities per significant coxph CTA", x = "CTA", y = "Intensities") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+#dev.off()
+```
+
+
+
+## 2) Conventional chondrosarcomas
+This section like part I concerns conventional chondrosarcomas
+```{r, fig.height=15, fig.cap="Forest plot for significant CTA (n = 63)"}
+# CTA data
+df_expr_cta <- df_expr_cta[df_metadata_surv_conv$Patient, ]
+
+# Apply coxph and generate forest plot with significant data
+res_cta <- apply_coxph_model(df_expr_cta)
+#write.table(results_cont, "../results/results_coxph_var_cont_cta_zscore_all_patietns.tsv", sep = "\t", row.names = FALSE, quote = FALSE)
+res_cta_signif <- res_cta[res_cta$Pvalue < 0.05,]
+#pdf("../results/figures/forest_plots/conv_chondro/forest_plot_conv_patients_var_cont_cta_zscores_sorted.pdf", width = 10, height = 30)
+generate_forestplot(res_cta_signif, Type = FALSE)
+#dev.off()
+```
+\newpage
+Same than previously, we see that there is more bad impact CTA than good. With this, we have also clustering these CTA to see groups and make another analysis.
+
+### Intensities jitter plot for significant CTA
+```{r, fig.width=15, fig.cap="Intensitites jitter plot for significant CTA (n = 63)"}
+# Prepare data
+df <- df_CTA_immune_whole_clean_avg[, df_metadata_surv_conv$Patient]
+df <- df[rownames(df) %in% res_cta_signif[,1],]
+df$SYMBOL <- rownames(df)
+
+# Transform data for the plot
+df_long <- pivot_longer(df, 
+                        cols = -SYMBOL, 
+                        values_to = "value")
+
+# Create the plot
+#pdf(file = "../results/figures/other_plots/plot_cta_coxph_signif_conv_indiv.pdf", height = 10, width = 50)
+ggplot(df_long, aes(x = reorder(SYMBOL, -value), y = value)) +
+  geom_jitter(width = 0.2, height = 0, size = 1, alpha = 0.3, colour = "blue") +
+  geom_boxplot(alpha = 0.4, outliers = FALSE, colour = "black", fill = NA) +
+  labs(title = "Plot of instensities per significant coxph CTA", x = "CTA", y = "Intensities") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+#dev.off()
+```
+
+\newpage
+
+# III. Survival analysis for clusters from CTA heatmaps
+This section use clustering results from script 5 on expression analysis.
+
+## 1) All chondrosarcoma types
+This part compute with all the patients.
+
+### a- Clustering Kmeans k = 4 with all chondrosarcoma types
+The clustering corresponds to the figure 32.
+```{r, fig.cap="Kaplan-Meier plot with clusters from figure 32 (script 5) (n = 82)"}
+# Read clusters
+l_anno_all <- read.table("../results/clusters_indiv/clusters_all_indiv_mhc.tsv", header = TRUE, sep = "\t")
+df_cluster_all <- merge(l_anno_all, df_metadata_surv, by = "Patient")
+rownames(df_cluster_all) <- df_cluster_all$Patient
+p <- plot_km(survfit(Surv(OS.delay, OS.event) ~ Cluster, data = df_cluster_all), df_cluster_all)
+p
+```
+We see that there is no significant differences between the 4 clusters.
+
+### b- Significative coxph CTA genes clustering
+This clustering is from heatmap 2.
+```{r, fig.cap="Kaplan-Meier plot with clusters from figure 2 (script 5) (n = 82)"}
+# Read clusters
+l_cta_all <- read.table("../results/clusters_indiv/clusters_all_indiv_mhc_cta_signif_coxph.tsv", header = TRUE, sep = "\t")
+
+df_cluster_cta_all <- merge(l_cta_all, df_metadata_surv, by = "Patient")
+rownames(df_cluster_cta_all) <- df_cluster_cta_all$Patient
+p <- plot_km(survfit(Surv(OS.delay, OS.event) ~ Cluster, data = df_cluster_cta_all), df_cluster_cta_all)
+p
+```
+Here we see that the C3 have bad survival and this cluster correspond to an over expression of some CTA. So, we can sat that these CTA could be markers.
+
+## 2) Conventional chondrosarcomas
+This part concerns conventional types.
+
+### a- Clustering Kmeans k = 2
+This clustering is from figure 33.
+```{r, fig.cap="Kaplan-Meier plot with clusters from figure 33 (script 5) (n = 63)"}
+# Read clusters
+l_anno_conv <- read.table("../results/clusters_indiv/clusters_conv_indiv_mhc.tsv", header = TRUE, sep = "\t")
+df_cluster_conv <- merge(l_anno_conv, df_metadata_surv_conv, by = "Patient")
+rownames(df_cluster_conv) <- df_cluster_conv$Patient
+p <- plot_km(survfit(Surv(OS.delay, OS.event) ~ Cluster, data = df_cluster_conv), df_cluster_conv)
+p
+```
+We see that there is not differences.
+
+### b- Significative coxph CTA genes clustering
+This clustering is from heatmap 3.
+```{r, fig.cap="Kaplan-Meier plot with clusters from figure 3 (script 5) (n = 63)"}
+# Read clusters
+l_cta_conv <- read.table("../results/clusters_indiv/clusters_conv_indiv_mhc_cta_signif_coxph.tsv", header = TRUE, sep = "\t")
+
+# Prepare table
+df_cluster_cta_all <- merge(l_cta_conv, df_metadata_surv, by = "Patient")
+rownames(df_cluster_cta_all) <- df_cluster_cta_all$Patient
+p <- plot_km(survfit(Surv(OS.delay, OS.event) ~ Cluster, data = df_cluster_cta_all), df_cluster_cta_all)
+p
+```
+This confirm the KM plot with all patients. We clearly see that some CTA have bad impact on survival.
+
+#### Merge C1 and C2
+Here, we want to merge the 2 clusters to see the differences than with 3.
+```{r, fig.cap="Kaplan-Meier plot with merged clusters from figure 18 (n = 63)"}
+# Prepare table
+df_cluster_cta_all_merge <- merge(l_cta_conv, df_metadata_surv, by = "Patient")
+df_cluster_cta_all_merge$Cluster <- ifelse(df_cluster_cta_all_merge$Cluster == 2, 1, df_cluster_cta_all_merge$Cluster)
+rownames(df_cluster_cta_all_merge) <- df_cluster_cta_all_merge$Patient
+p <- plot_km(survfit(Surv(OS.delay, OS.event) ~ Cluster, data = df_cluster_cta_all_merge), df_cluster_cta_all_merge)
+p
+```
+We see that there is always significant.
+
+## 3) Cluster 1 from CTA heatmaps analysis
+This section is the analysis of the previous results. We want to see where the patients clustered in other heatmaps.
+```{r}
+# Take indiv from cluster 1
+l_c1_cta_all <- l_cta_all[l_cta_all$Cluster == 1, ]
+
+# Merge to see where the indiv are in the other heatmap
+df_analysis_cold_all <- l_c1_cta_all %>%
+  left_join(df_metadata %>% select(Patient, Histology), by = "Patient") %>%
+  left_join(l_anno_all, by = "Patient") 
+df_analysis_cold_all
+```
+We see that there is a lot of dediff type that expressed CTA involved in bad survival events but retrieve in cluster 4 (HOT) for the immune cells. One dediff is in the cold cluster. So the differentiated cancers are really different than conventional and are infiltrated by immune cells or not but the most is infiltrated.
+
+```{r}
+# Take indiv from cluster 1
+l_c1_cta_conv <- l_cta_conv[l_cta_conv$Cluster == 1, ]
+df_analysis_cold_conv <- l_c1_cta_conv %>%
+  left_join(df_metadata %>% select(Patient, Histology), by = "Patient") %>%
+  left_join(l_anno_all, by = "Patient") %>%
+  left_join(l_anno_conv, by = "Patient")
+df_analysis_cold_conv
+```
+For the conventional chondrosarcomas, we see that all the patient have G3 chondrosarcoma and can be in the cluster 2.
+
+
+
