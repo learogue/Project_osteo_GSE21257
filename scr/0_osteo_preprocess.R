@@ -129,10 +129,20 @@ df_CTA_immune_sign_whole <- merge(df_CTA_whole, df_immune_sign, by.x = "SYMBOL",
 # Reorganize the columns
 df_CTA_immune_sign_whole <- df_CTA_immune_sign_whole %>%
   dplyr::select(SYMBOL, CTA, Signature, everything())
-write.table(df_CTA_immune_sign_whole, file = "../results/expr_matrix_int_CTA_sign_imm.tsv", sep = "\t", row.names = FALSE, quote = FALSE)
+write.table(df_CTA_immune_sign_whole, file = "../results/expr_matrix_int_CTA_sign_imm_avg.tsv", sep = "\t", row.names = FALSE, quote = FALSE)
+
+
+# Combine multiple signatures into one for each gene by concatenating with a comma
+df_CTA_immune_sign_whole_clean <- df_CTA_immune_sign_whole %>%
+  group_by(SYMBOL) %>%
+  summarise(
+    Signature = paste(unique(Signature), collapse = ", "),                                              
+    across(everything(), ~dplyr::first(.)),  
+    .groups = "drop")
+write.table(df_CTA_immune_sign_whole_clean, file = "../results/expr_matrix_int_CTA_sign_imm_clean.tsv", sep = "\t", row.names = FALSE, quote = FALSE)
 
 # Z-scores on rows on whole genes to comparate expression between genes with a robust manner
-df_CTA_immune_whole_clean_z_scores <- calculate_z_scores(df_CTA_immune_sign_whole, c(1,2,3))
+df_CTA_immune_whole_clean_z_scores <- calculate_z_scores(df_CTA_immune_sign_whole_clean, c(1,2,3))
 write.table(df_CTA_immune_whole_clean_z_scores, file = "../results/expr_matrix_CTA_sign_imm_z_scores.tsv", sep = "\t", row.names = FALSE, quote = FALSE)
 
 # Average the expression between same immune cells types
